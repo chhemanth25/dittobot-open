@@ -131,8 +131,8 @@ def initialize_logging(cluster_id, cluster_name, logging_code):
     dpy_logger.addHandler(stdout_handler)
 
     notifier = pybrake.Notifier(
-        project_id=438327,
-        project_key="28005330ae4e43762e503a083a6f3d92",
+        project_id=your-project-id,
+        project_key="your-airbrake-key-here",
         environment="production",
     )
 
