@@ -11,3 +11,4 @@
 
 Please refer to COPYRIGHT.md for information regarding the source code.
 
+### For copyright reasons, original Closed-source repo: https://github.com/skylarr1227/ditto
