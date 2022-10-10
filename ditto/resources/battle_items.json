@@ -1,0 +1,122 @@
+[
+  {
+    "item": "big-root",
+    "price": 10000
+  },
+  {
+    "item": "black-belt",
+    "price": 10000
+  },
+  {
+    "item": "black-glasses",
+    "price": 10000
+  },
+  {
+    "item": "dragon-fang",
+    "price": 10000
+  },
+  {
+    "item": "hard-stone",
+    "price": 10000
+  },
+  {
+    "item": "light-ball",
+    "price": 10000
+  },
+  {
+    "item": "magnet",
+    "price": 10000
+  },
+  {
+    "item": "muscle-band",
+    "price": 10000
+  },
+  {
+    "item": "mystic-water",
+    "price": 10000
+  },
+  {
+    "item": "never-melt-ice",
+    "price": 10000
+  },
+  {
+    "item": "poison-barb",
+    "price": 10000
+  },
+  {
+    "item": "rocky-helmet",
+    "price": 10000
+  },
+  {
+    "item": "scope-lens",
+    "price": 10000
+  },
+  {
+    "item": "shell-bell",
+    "price": 10000
+  },
+  {
+    "item": "wise-glasses",
+    "price": 10000
+  },
+  {
+    "item": "assault-vest",
+    "price": 10000
+  },
+  {
+    "item": "air-balloon",
+    "price": 10000
+  },
+  {
+    "item": "charcoal",
+    "price": 10000
+  },
+  {
+    "item": "weakness-policy",
+    "price": 3000
+  },
+  {
+    "item": "eviolite",
+    "price": 5000
+  },
+  {
+    "item": "white-herb",
+    "price": 2500
+  },
+  {
+    "item": "life-orb",
+    "price": 10000
+  },
+  {
+    "item": "choice-scarf",
+    "price": 10000
+  },
+  {
+    "item": "expert-belt",
+    "price": 9500
+  },
+  {
+    "item": "choice-band",
+    "price": 10000
+  },
+  {
+    "item": "choice-specs",
+    "price": 10000
+  },
+  {
+    "item": "soul-dew",
+    "price": 20000
+  },
+  {
+    "item": "leftovers",
+    "price": 10000
+  },
+  {
+    "item": "silk-scarf",
+    "price": 10000
+  },
+  {
+    "item": "focus-sash",
+    "price": 10000
+  }
+]

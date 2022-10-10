@@ -1,0 +1,42 @@
+[
+  {
+    "region": "kalos",
+    "starters": ["Fennekin", "Froakie", "Chespin"],
+    "url": "https://vignette.wikia.nocookie.net/pokemon/images/c/ce/Kalos_starters.png/revision/latest?cb=20170628220032"
+  },
+  {
+    "region": "kanto",
+    "starters": ["Charmander", "Squirtle", "Bulbasaur"],
+    "url": "http://img08.deviantart.net/984c/i/2015/113/2/9/the_kanto_starters_by_tails19950-d5rt4zf.png"
+  },
+  {
+    "region": "johto",
+    "starters": ["Cyndaquil", "Totodile", "Chikorita"],
+    "url": "http://www.dtc-wsuv.org/cmdc/gallery/archives/9.14/murphy/img/starter2.png"
+  },
+  {
+    "region": "unova",
+    "starters": ["Tepig", "Oshawott", "Snivy"],
+    "url": "https://poketouch.files.wordpress.com/2017/02/snivy_tepig_and_oshawott.png?w=648"
+  },
+  {
+    "region": "sinnoh",
+    "starters": ["Chimchar", "Piplup", "Turtwig"],
+    "url": "https://cdn.discordapp.com/attachments/519760131156738058/527911382956376064/sinnoh.png"
+  },
+  {
+    "region": "alola",
+    "starters": ["Litten", "Popplio", "Rowlet"],
+    "url": "https://archive-media-0.nyafuu.org/vp/image/1481/34/1481349255710.png"
+  },
+  {
+    "region": "hoenn",
+    "starters": ["Torchic", "Mudkip", "Treecko"],
+    "url": "https://img00.deviantart.net/ca80/i/2015/107/3/2/hoenn_starters_by_tails19950-d7n82t2.png"
+  },
+  {
+    "region": "galar",
+    "starters": ["Grookey", "Scorbunny", "Sobble"],
+    "url": "https://www.imore.com/sites/imore.com/files/styles/larger/public/field/image/2019/02/pokemon-sword-shield-starters.jpg?itok=HcYw2scn"
+  }
+]

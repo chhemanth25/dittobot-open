@@ -1,0 +1,5 @@
+# Comments are a thing here
+# because of how this file is parsed
+
+# NOTE: Internal extensions must be preceded by a *
+# Example: *foo

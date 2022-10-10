@@ -1,0 +1,466 @@
+[
+  {
+    "item": "shadow-stone",
+    "price": 100000000
+  },
+  {
+    "item": "ultranecronium-z",
+    "price": 100000000
+  },
+  {
+    "item": "adamant-orb",
+    "price": 100000000
+  },
+  {
+    "item": "evo-stone",
+    "price": 10000
+  },
+  {
+    "item": "coin-case",
+    "price": 1000
+  },
+  {
+    "item": "old-rod",
+    "price": 5000
+  },
+  {
+    "item": "new-rod",
+    "price": 10000
+  },
+  {
+    "item": "good-rod",
+    "price": 15000
+  },
+  {
+    "item": "super-rod",
+    "price": 20000
+  },
+  {
+    "item": "ultra-rod",
+    "price": 40000
+  },
+  {
+    "item": "ev-reset",
+    "price": 10000
+  },
+  {
+    "item": "daycare-space",
+    "price": 10000
+  },
+  {
+    "item": "ultra-destiny-knot",
+    "price": 30000
+  },
+  {
+    "item": "destiny-knot",
+    "price": 15000
+  },
+  {
+    "item": "weakness-policy",
+    "price": 3000
+  },
+  {
+    "item": "eviolite",
+    "price": 5000
+  },
+  {
+    "item": "white-herb",
+    "price": 2500
+  },
+  {
+    "item": "ability-capsule",
+    "price": 10000
+  },
+  {
+    "item": "soothe-bell",
+    "price": 5000
+  },
+  {
+    "item": "lucky-egg",
+    "price": 5000
+  },
+  {
+    "item": "xp-block",
+    "price": 3000
+  },
+  {
+    "item": "choice-scarf",
+    "price": 10000
+  },
+  {
+    "item": "expert-belt",
+    "price": 9500
+  },
+  {
+    "item": "choice-band",
+    "price": 10000
+  },
+  {
+    "item": "soul-dew",
+    "price": 20000
+  },
+  {
+    "item": "leftovers",
+    "price": 10000
+  },
+  {
+    "item": "silk-scarf",
+    "price": 10000
+  },
+  {
+    "item": "focus-sash",
+    "price": 10000
+  },
+  {
+    "item": "hp-up",
+    "price": 1000
+  },
+  {
+    "item": "protein",
+    "price": 1000
+  },
+  {
+    "item": "calcium",
+    "price": 1000
+  },
+  {
+    "item": "iron",
+    "price": 1000
+  },
+  {
+    "item": "carbos",
+    "price": 1000
+  },
+  {
+    "item": "zinc",
+    "price": 1000
+  },
+  {
+    "item": "fire-stone",
+    "price": 1000
+  },
+  {
+    "item": "sun-stone",
+    "price": 1000
+  },
+  {
+    "item": "shiny-stone",
+    "price": 1000
+  },
+  {
+    "item": "dusk-stone",
+    "price": 1000
+  },
+  {
+    "item": "dawn-stone",
+    "price": 1000
+  },
+  {
+    "item": "thunder-stone",
+    "price": 1000
+  },
+  {
+    "item": "ice-stone",
+    "price": 1000
+  },
+  {
+    "item": "water-stone",
+    "price": 1000
+  },
+  {
+    "item": "moon-stone",
+    "price": 1000
+  },
+  {
+    "item": "leaf-stone",
+    "price": 1000
+  },
+  {
+    "item": "deep-sea-tooth",
+    "price": 3000
+  },
+  {
+    "item": "dragon-scale",
+    "price": 3000
+  },
+  {
+    "item": "dubious-disc",
+    "price": 3000
+  },
+  {
+    "item": "electirizer",
+    "price": 3000
+  },
+  {
+    "item": "kings-rock",
+    "price": 3000
+  },
+  {
+    "item": "magmarizer",
+    "price": 3000
+  },
+  {
+    "item": "metal-coat",
+    "price": 3000
+  },
+  {
+    "item": "prism-scale",
+    "price": 3000
+  },
+  {
+    "item": "sachet",
+    "price": 3000
+  },
+  {
+    "item": "reaper-cloth",
+    "price": 3000
+  },
+  {
+    "item": "protector",
+    "price": 3000
+  },
+  {
+    "item": "up-grade",
+    "price": 3000
+  },
+  {
+    "item": "whipped-dream",
+    "price": 3000
+  },
+  {
+    "item": "oval-stone",
+    "price": 3000
+  },
+  {
+    "item": "razor-claw",
+    "price": 3000
+  },
+  {
+    "item": "razor-fang",
+    "price": 3000
+  },
+  {
+    "item": "everstone",
+    "price": 3000
+  },
+  {
+    "item": "sunstone",
+    "price": 3000
+  },
+  {
+    "item": "choice-specs",
+    "price": 10000
+  },
+  {
+    "item": "deep-sea-scale",
+    "price": 3000
+  },
+  {
+    "item": "griseous-orb",
+    "price": 10000
+  },
+  {
+    "item": "gracidea-flower",
+    "price": 7500
+  },
+  {
+    "item": "mega-stone-x",
+    "price": 3500
+  },
+  {
+    "item": "mega-stone-y",
+    "price": 3500
+  },
+  {
+    "item": "mega-stone",
+    "price": 2000
+  },
+  {
+    "item": "meltan-candy",
+    "price": 15000
+  },
+  {
+    "item": "blue-orb",
+    "price": 10000
+  },
+  {
+    "item": "meteorite",
+    "price": 10500
+  },
+  {
+    "item": "red-orb",
+    "price": 10000
+  },
+  {
+    "item": "n-lunarizer",
+    "price": 9500
+  },
+  {
+    "item": "n-solarizer",
+    "price": 9500
+  },
+  {
+    "item": "big-root",
+    "price": 10000
+  },
+  {
+    "item": "black-belt",
+    "price": 10000
+  },
+  {
+    "item": "black-glasses",
+    "price": 10000
+  },
+  {
+    "item": "dragon-fang",
+    "price": 10000
+  },
+  {
+    "item": "hard-stone",
+    "price": 10000
+  },
+  {
+    "item": "light-ball",
+    "price": 10000
+  },
+  {
+    "item": "magnet",
+    "price": 10000
+  },
+  {
+    "item": "muscle-band",
+    "price": 10000
+  },
+  {
+    "item": "mystic-water",
+    "price": 10000
+  },
+  {
+    "item": "never-melt-ice",
+    "price": 10000
+  },
+  {
+    "item": "poison-barb",
+    "price": 10000
+  },
+  {
+    "item": "rocky-helmet",
+    "price": 10000
+  },
+  {
+    "item": "scope-lens",
+    "price": 10000
+  },
+  {
+    "item": "shell-bell",
+    "price": 10000
+  },
+  {
+    "item": "wise-glasses",
+    "price": 10000
+  },
+  {
+    "item": "assault-vest",
+    "price": 10000
+  },
+  {
+    "item": "air-balloon",
+    "price": 10000
+  },
+  {
+    "item": "charcoal",
+    "price": 10000
+  },
+  {
+    "item": "life-orb",
+    "price": 10000
+  },
+  {
+    "item": "prison-bottle",
+    "price": 9500
+  },
+  {
+    "item": "light-stone",
+    "price": 9500
+  },
+  {
+    "item": "dark-stone",
+    "price": 9500
+  },
+  {
+    "item": "reveal-glass",
+    "price": 10500
+  },
+  {
+    "item": "zygarde-cell",
+    "price": 15000
+  },
+  {
+    "item": "draco-plate",
+    "price": 10000
+  },
+  {
+    "item": "dread-plate",
+    "price": 10000
+  },
+  {
+    "item": "earth-plate",
+    "price": 10000
+  },
+  {
+    "item": "fist-plate",
+    "price": 10000
+  },
+  {
+    "item": "flame-plate",
+    "price": 10000
+  },
+  {
+    "item": "icicle-plate",
+    "price": 10000
+  },
+  {
+    "item": "insect-plate",
+    "price": 10000
+  },
+  {
+    "item": "iron-plate",
+    "price": 10000
+  },
+  {
+    "item": "meadow-plate",
+    "price": 10000
+  },
+  {
+    "item": "mind-plate",
+    "price": 10000
+  },
+  {
+    "item": "pixie-plate",
+    "price": 10000
+  },
+  {
+    "item": "sky-plate",
+    "price": 10000
+  },
+  {
+    "item": "splash-plate",
+    "price": 10000
+  },
+  {
+    "item": "spooky-plate",
+    "price": 10000
+  },
+  {
+    "item": "stone-plate",
+    "price": 10000
+  },
+  {
+    "item": "toxic-plate",
+    "price": 10000
+  },
+  {
+    "item": "zap-plate",
+    "price": 10000
+  }
+]

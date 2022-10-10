@@ -1,0 +1,54 @@
+version: "3.9"
+services:
+  dittobot-duelapi:
+    build: ./duelapi
+    container_name: dittobot-duelapi
+    restart: always
+    networks:
+      dittobot_network:
+        ipv4_address: 178.28.0.11
+    volumes:
+      - type: bind
+        source: ./shared/duel
+        target: /app/res
+  dittobot-gateway-queue:
+    image: twilightrs/gateway-queue:latest
+    container_name: dittobot-gateway-queue
+    restart: always
+    networks:
+      dittobot_network:
+        ipv4_address: 178.28.0.12
+    environment:
+      - PORT=5000
+  dittobot-redis:
+    image: redis
+    container_name: dittobot-redis
+    restart: always
+    networks:
+      dittobot_network:
+        ipv4_address: 178.28.0.13
+  dittobot-mongo:
+    image: mongo
+    container_name: dittobot-mongo
+    restart: always
+    networks:
+      dittobot_network:
+        ipv4_address: 178.28.0.15
+    env_file: ./env/mongo.env
+    volumes:
+      -  /home/mongo/:/data/db
+    ports:
+      - "61392:27016"
+  dittogod-redis:
+    image: redis
+    container_name: dittogod-redis
+    restart: always
+    networks:
+      dittobot_network:
+        ipv4_address: 178.28.0.25
+networks:
+  dittobot_network:
+    name: dittobot-network
+    ipam:
+      config:
+        - subnet: 178.28.0.0/24
