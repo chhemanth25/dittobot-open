@@ -1,10 +1,10 @@
 """
-Unless otherwise mentioned, source code in this repository is owned by the Dittobot Developers mentioned in README.md in the root of this repository.
-This source code is un-licensed.  As such, standard copyright laws apply.
-Any unauthorized access, distribution, or use is strictly prohibited.
+Unless otherwise mentioned, source code in this repository is owned by the Dittobot Owners mentioned in README.md in the root of this repository.
+
 
 This code is structured off the IdleRPG Discord bot's launcher, which you can find here:
 https://github.com/Gelbpunkt/IdleRPG/blob/current/launcher.py
+Copyright (C) 2018-2021 Diniboy and Gelbpunkt
 """
 
 
