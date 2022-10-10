@@ -34,10 +34,10 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 DATABASE_URL = os.environ["DATABASE_URL"]
 
 notifier = pybrake.Notifier(
-    project_id=438327,
-    project_key="28005330ae4e43762e503a083a6f3d92",
-    environment="production",
-)
+        project_id=your-project-id,
+        project_key="your-airbrake-key-here",
+        environment="production",
+    )
 
 
 class Ditto(commands.AutoShardedBot):
@@ -92,11 +92,11 @@ class Ditto(commands.AutoShardedBot):
         self.is_discord_issue = False
         self.msg_maintenance = (
             "The bot is currently undergoing maintenance.\n"
-            # "For updates and more information, check the #bot-announcements channel of the Official Server (https://discord.gg/Q5CuyqFuTU)."
+            # "For updates and more information, check the #bot-announcements channel of the Official Server."
         )
         self.msg_discord_issue = (
             "There is currently an issue on discord's end that is preventing normal usage of the bot.\n"
-            # "For updates and more information, check the #bot-announcements channel of the Official Server (https://discord.gg/Q5CuyqFuTU)."
+            # "For updates and more information, check the #bot-announcements channel of the Official Server."
         )
 
         # Testing
@@ -371,7 +371,7 @@ class Ditto(commands.AutoShardedBot):
         WARNING: This API is evil, modify this code at your own risk!
         """
         headers = {"Authorization": f"Bearer {os.environ['PATREON_TOKEN']}"}
-        api_url = "https://www.patreon.com/api/oauth2/v2/campaigns/3802264/members?include=user,currently_entitled_tiers&fields[member]=patron_status&fields[user]=social_connections&fields[tier]=title"
+        api_url = ""
         users_tiers = []
         members = []
         RED = "{LARGE RED CIRCLE}"
@@ -492,7 +492,7 @@ class Ditto(commands.AutoShardedBot):
         self.banned_users = (await self.db[1].blacklist.find_one())["users"]
         self.banned_guilds = (await self.db[1].blacklist.find_one())["guilds"]
 
-    # expected behaviour: https://discord.com/channels/999953429751414784/1001150708550209566/1003304610322194532 might be having issues but shouldn't
+
     def botbanned(self, id):
         return id in self.banned_users  # and (id not in (790722073248661525))
 
@@ -518,18 +518,13 @@ class Ditto(commands.AutoShardedBot):
         result = await self.db[1][collection].update_one(filter, {"$set": update})
         return result
 
-    # def is_dylee(self, ctx):
-    #    return ctx == "Dylee" if type(ctx) == str else ctx.author == self.owner
+
 
     async def load_extensions(self):
         cogs = [
             "boost",
             "botlist",
             "breeding",
-            # "motz",
-            # "admin",
-            # "mod",
-            # "investigator",
             "chests",
             "cooldown",
             "duel",
@@ -540,9 +535,7 @@ class Ditto(commands.AutoShardedBot):
             "filter",
             "fishing",
             "forms",
-            # "gamecorner",
             "helpcog",
-            #"invitecheck",
             "items",
             "lookup",
             "market",
@@ -557,7 +550,6 @@ class Ditto(commands.AutoShardedBot):
             "sell",
             "server",
             "shop",
-            # "admin",
             "spawn",
             "staff",
             "skins",
@@ -597,10 +589,6 @@ class Ditto(commands.AutoShardedBot):
                     "boost",
                     "botlist",
                     "breeding",
-                    # "motz",
-                    # "admin",
-                    # "mod",
-                    # "investigator",
                     "chests",
                     "cooldown",
                     "duel",
@@ -611,9 +599,7 @@ class Ditto(commands.AutoShardedBot):
                     "filter",
                     "fishing",
                     "forms",
-                    # "gamecorner",
                     "helpcog",
-                    #"invitecheck",
                     "items",
                     "lookup",
                     "market",
@@ -628,7 +614,6 @@ class Ditto(commands.AutoShardedBot):
                     "sell",
                     "server",
                     "shop",
-                    # "admin",
                     "spawn",
                     "staff",
                     "skins",
