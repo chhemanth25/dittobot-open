@@ -19,6 +19,408 @@ from dittocogs.pokemon_list import *
 
 ORANGE = 0xF4831B
 RED_GREEN = [0xBB2528, 0x146B3A]
+BUYABLE_SKINS = {
+    "event/dittohalloween1": [
+        "bulbasaur",
+        "ivysaur",
+        "venusaur",
+        "magikarp",
+        "gyarados",
+        "eevee",
+        "vaporeon",
+        "jolteon",
+        "flareon",
+        "espeon",
+        "umbreon",
+        "leafeon",
+        "glaceon",
+        "sylveon",
+        "wooper",
+        "quagsire",
+        "entei",
+        "lugia",
+        "chingling",
+        "chimecho",
+        "bidoof",
+        "bibarel",
+        "zorua",
+        "zoroark",
+        "joltik",
+        "galvantula",
+        "litwick",
+        "lampent",
+        "chandelure",
+        "bouffalant",
+        "genesect",
+        "rockruff",
+        "lycanroc",
+        "lycanroc-midnight",
+        "lycanroc-dusk",
+        "nihilego",
+        "marshadow",
+        "snom",
+        "frosmoth",
+    ],
+    "event/dittohalloween2": [
+        "bulbasaur",
+        "ivysaur",
+        "venusaur",
+        "magikarp",
+        "gyarados",
+        "eevee",
+        "vaporeon",
+        "jolteon",
+        "flareon",
+        "espeon",
+        "umbreon",
+        "leafeon",
+        "glaceon",
+        "sylveon",
+        "wooper",
+        "quagsire",
+        "entei",
+        "lugia",
+        "chingling",
+        "chimecho",
+        "bidoof",
+        "bibarel",
+        "zorua",
+        "zoroark",
+        "joltik",
+        "galvantula",
+        "litwick",
+        "lampent",
+        "chandelure",
+        "bouffalant",
+        "genesect",
+        "rockruff",
+        "lycanroc",
+        "lycanroc-midnight",
+        "lycanroc-dusk",
+        "nihilego",
+        "marshadow",
+        "snom",
+        "frosmoth",
+    ],
+    "event/dittomons1": [
+        "bulbasaur",
+        "ivysaur",
+        "venusaur",
+        "magikarp",
+        "gyarados",
+        "eevee",
+        "vaporeon",
+        "jolteon",
+        "flareon",
+        "espeon",
+        "umbreon",
+        "leafeon",
+        "glaceon",
+        "sylveon",
+        "wooper",
+        "quagsire",
+        "entei",
+        "lugia",
+        "chingling",
+        "chimecho",
+        "bidoof",
+        "bibarel",
+        "zorua",
+        "zoroark",
+        "joltik",
+        "galvantula",
+        "bouffalant",
+        "genesect",
+        "rockruff",
+        "lycanroc",
+        "lycanroc-midnight",
+        "lycanroc-dusk",
+        "nihilego",
+        "marshadow",
+        "snom",
+        "frosmoth",
+    ],
+    "event/dittomons2": [
+        "bulbasaur",
+        "ivysaur",
+        "venusaur",
+        "magikarp",
+        "gyarados",
+        "eevee",
+        "vaporeon",
+        "jolteon",
+        "flareon",
+        "espeon",
+        "umbreon",
+        "leafeon",
+        "glaceon",
+        "sylveon",
+        "wooper",
+        "quagsire",
+        "entei",
+        "lugia",
+        "chingling",
+        "chimecho",
+        "bidoof",
+        "bibarel",
+        "zorua",
+        "zoroark",
+        "joltik",
+        "galvantula",
+        "bouffalant",
+        "genesect",
+        "rockruff",
+        "nihilego",
+        "marshadow",
+        "snom",
+        "frosmoth",
+        ],
+    }
+    # Map of skin name -> int release timestamp (time.time() // (60 * 60 * 24 * 7))
+    # Skins will be excluded from the shop if their release timestamp is greater than the current release timestamp
+    # When adding a new skin, the value set MUST be greater than the current value, otherwise current shops will shuffle
+RELEASE_PERIOD = {
+    "event/dittohalloween1": 2754,
+    "event/dittohalloween2": 2754,
+    "event/dittomons1": 2754,
+    "event/dittomons2": 2754,
+    }
+
+
+class RaidSpawn(discord.ui.View):
+    """A spawn embed for a raid spawn."""
+
+    def __init__(self, bot, channel, poke: str, skin: str = None):
+        super().__init__(timeout=120)
+        self.bot = bot
+        self.channel = channel
+        self.poke = poke
+        self.skin = skin
+        self.registered = []
+        self.attacked = {}
+        self.state = "registering"
+        self.message = None
+
+    async def interaction_check(self, interaction):
+        if self.state == "registering":
+            if interaction.user in self.registered:
+                await interaction.response.send_message(
+                    content="You have already joined!", ephemeral=True
+                )
+                return False
+            return True
+        elif self.state == "attacking":
+            if interaction.user in self.attacked:
+                await interaction.response.send_message(
+                    content="You have already attacked!", ephemeral=True
+                )
+                return False
+            if interaction.user not in self.registered:
+                await interaction.response.send_message(
+                    content="You didn't join the battle! You can't attack this one.",
+                    ephemeral=True,
+                )
+                return False
+            return True
+        else:
+            await interaction.response.send_message(
+                content="This battle has already ended!", ephemeral=True
+            )
+            return False
+
+    async def start(self):
+        pokeurl = "https://skylarr1227.github.io/skins/" + await get_battle_file_name(
+            self.poke, self.bot, skin=self.skin
+        )
+        guild = await self.bot.mongo_find("guilds", {"id": self.channel.guild.id})
+        if guild is None:
+            small_images = False
+        else:
+            small_images = guild["small_images"]
+        color = random.choice(self.bot.colors)
+        embed = discord.Embed(
+            title="A Ditto Pokémon has spawned, join the fight to take it down!",
+            color=color,
+        )
+        embed.add_field(name="-", value="Click the button to join!")
+        if small_images:
+            embed.set_thumbnail(url=pokeurl)
+        else:
+            embed.set_image(url=pokeurl)
+        self.add_item(RaidJoin())
+        self.message = await self.channel.send(embed=embed, view=self)
+        await asyncio.sleep(30)
+        self.clear_items()
+
+        if not self.registered:
+            embed = discord.Embed(
+                title="The Ditto Pokémon ran away!",
+                color=color,
+            )
+            if small_images:
+                embed.set_thumbnail(url=pokeurl)
+            else:
+                embed.set_image(url=pokeurl)
+            await self.message.edit(embed=embed, view=None)
+            return
+
+        # Calculate valid moves of each effectiveness tier
+        form_info = await self.bot.db[1].forms.find_one(
+            {"identifier": self.poke.lower()}
+        )
+        type_ids = (
+            await self.bot.db[1].ptypes.find_one({"id": form_info["pokemon_id"]})
+        )["types"]
+        type_effectiveness = {}
+        for te in await self.bot.db[1].type_effectiveness.find({}).to_list(None):
+            type_effectiveness[(te["damage_type_id"], te["target_type_id"])] = te[
+                "damage_factor"
+            ]
+        super_types = []
+        normal_types = []
+        un_types = []
+        for attacker_type in range(1, 19):
+            effectiveness = 1
+            for defender_type in type_ids:
+                effectiveness *= (
+                    type_effectiveness[(attacker_type, defender_type)] / 100
+                )
+            if effectiveness > 1:
+                super_types.append(attacker_type)
+            elif effectiveness < 1:
+                un_types.append(attacker_type)
+            else:
+                normal_types.append(attacker_type)
+        super_raw = (
+            await self.bot.db[1]
+            .moves.find(
+                {"type_id": {"$in": super_types}, "damage_class_id": {"$ne": 1}}
+            )
+            .to_list(None)
+        )
+        super_moves = [
+            x["identifier"].capitalize().replace("-", " ") for x in super_raw
+        ]
+        normal_raw = (
+            await self.bot.db[1]
+            .moves.find(
+                {"type_id": {"$in": normal_types}, "damage_class_id": {"$ne": 1}}
+            )
+            .to_list(None)
+        )
+        normal_moves = [
+            x["identifier"].capitalize().replace("-", " ") for x in normal_raw
+        ]
+        un_raw = (
+            await self.bot.db[1]
+            .moves.find({"type_id": {"$in": un_types}, "damage_class_id": {"$ne": 1}})
+            .to_list(None)
+        )
+        un_moves = [x["identifier"].capitalize().replace("-", " ") for x in un_raw]
+
+        # Add the moves to the view
+        moves = []
+        moves.append(RaidMove(random.choice(super_moves), 2))
+        moves.append(RaidMove(random.choice(normal_moves), 1))
+        for move in random.sample(un_moves, k=2):
+            moves.append(RaidMove(move, 0))
+        random.shuffle(moves)
+        for move in moves:
+            self.add_item(move)
+
+        self.max_hp = int(len(self.registered) * 1.33)
+        embed = discord.Embed(
+            title="A Ditto Pokémon has spawned, attack it with everything you've got!",
+            color=color,
+        )
+        embed.add_field(name="-", value=f"HP = {self.max_hp}/{self.max_hp}")
+        if small_images:
+            embed.set_thumbnail(url=pokeurl)
+        else:
+            embed.set_image(url=pokeurl)
+        self.state = "attacking"
+        await self.message.edit(embed=embed, view=self)
+
+        for i in range(5):
+            await asyncio.sleep(3)
+            hp = max(self.max_hp - sum(self.attacked.values()), 0)
+            embed.clear_fields()
+            embed.add_field(name="-", value=f"HP = {hp}/{self.max_hp}")
+            await self.message.edit(embed=embed)
+
+        self.state = "ended"
+        hp = max(self.max_hp - sum(self.attacked.values()), 0)
+        if hp > 0:
+            embed = discord.Embed(
+                title="The Ditto Pokémon got away!",
+                color=color,
+            )
+            hp = max(self.max_hp - sum(self.attacked.values()), 0)
+            embed.add_field(name="-", value=f"HP = {hp}/{self.max_hp}")
+            if small_images:
+                embed.set_thumbnail(url=pokeurl)
+            else:
+                embed.set_image(url=pokeurl)
+            await self.message.edit(embed=embed, view=None)
+            return
+
+        async with self.bot.db[0].acquire() as pconn:
+            for attacker, damage in self.attacked.items():
+                await pconn.execute(
+                    "UPDATE users SET skin_tokens = skin_tokens + $1 WHERE u_id = $2",
+                    damage * 2,
+                    attacker.id,
+                )
+        embed = discord.Embed(
+            title="The Ditto Pokémon was defeated! Attackers have been awarded skin tokens.",
+            color=color,
+        )
+        if small_images:
+            embed.set_thumbnail(url=pokeurl)
+        else:
+            embed.set_image(url=pokeurl)
+        await self.message.edit(embed=embed, view=None)
+
+
+class RaidJoin(discord.ui.Button):
+    """A button to join a ditto pokemon raid."""
+
+    def __init__(self):
+        super().__init__(label="Join", style=discord.ButtonStyle.green)
+
+    async def callback(self, interaction):
+        self.view.registered.append(interaction.user)
+        await interaction.response.send_message(
+            content="You have joined the battle!", ephemeral=True
+        )
+
+
+class RaidMove(discord.ui.Button):
+    """A move button for attacking a ditto pokemon raid."""
+
+    def __init__(self, move, damage):
+        super().__init__(
+            label=move,
+            style=discord.ButtonStyle.gray,
+        )
+        self.move = move
+        self.damage = damage
+        if damage == 2:
+            self.effective = (
+                "It's super effective! You will get 2x rewards if the poke is defeated."
+            )
+        elif damage == 1:
+            self.effective = "It hits! You will get 1x rewards if the poke is defeated."
+        else:
+            self.effective = "It shrugged off your attack..."
+
+    async def callback(self, interaction):
+        self.view.attacked[interaction.user] = self.damage
+        await interaction.response.send_message(
+            content=f"You attack the ditto pokemon with {self.move}... {self.effective}",
+            ephemeral=True,
+        )
+
 
 
 class Events(commands.Cog):
@@ -488,6 +890,158 @@ class Events(commands.Cog):
     async def halloween_cmds(self, ctx):
         """Top layer of group"""
 
+    # Map of skin name -> list[pokemon name]
+# Every skin pack must have at least 5 skins in it, or the code must be modified
+    
+
+## replacement collections
+
+    def generate_shop(self, ctx):
+        """Generates the skins available for a current user."""
+        state = random.getstate()
+        try:
+            current_time = int(time.time() // (60 * 60 * 24 * 7))
+            random.seed(ctx.author.id + current_time)
+            skins = [
+                skin
+                for skin, release in RELEASE_PERIOD.items()
+                if release <= current_time
+            ]
+
+            skins = random.sample(skins, k=3)
+            result = {skin: random.sample(BUYABLE_SKINS[skin], k=5) for skin in skins}
+        except Exception:
+            raise
+        else:
+            return result
+        finally:
+            random.setstate(state)
+
+    def skin_price(self, pokemon: str):
+        """Returns the price of a particular pokemon in the skin shop."""
+        pokemon = pokemon.capitalize()
+        legend = set(LegendList + ubList)
+        if pokemon in legend:
+            return 160
+        rare = set(starterList + pseudoList)
+        if pokemon in rare:
+            return 80
+        common = set(pList) - legend - rare
+        return 40 if pokemon in common else 404
+
+    @halloween_cmds.command(name="skin shop")
+    async def event_skin_shop(self, ctx) -> None:
+        """View the skins available to you for purchase this week."""
+        async with ctx.bot.db[0].acquire() as pconn:
+            shards = await pconn.fetchval(
+                "SELECT skin_tokens FROM users WHERE u_id = $1", ctx.author.id
+            )
+        if shards is None:
+            await ctx.send("You have not started!\nStart with `/start` first.")
+            return
+        embed = discord.Embed(
+            title="Skin Shop",
+            color=random.choice(ctx.bot.colors),
+            description=f"You have **{shards}** skin shards.\nSkins are available for the listed pokemon and their evolved forms.\nBuy a skin with `/skin buy`.\nApplying a shop skin to a pokemon will make it untradable.",
+        )
+        skins = self.generate_shop(ctx)
+        for skin, pokes in skins.items():
+            desc = "".join(
+                f"`{poke.capitalize()}` - {self.skin_price(poke)}\n" for poke in pokes
+            )
+
+            embed.add_field(name=f'"{skin.capitalize()}" Skin', value=desc, inline=True)
+        embed.set_footer(text="Options rotate every Wednesday at 8pm ET.")
+        await ctx.send(embed=embed)
+
+    @halloween_cmds.command(name="skin buy")
+    @tradelock
+    async def skin_buy(self, ctx, poke: str, skin: str) -> None:
+        """Buy a skin from your shop."""
+        skin = skin.lower()
+        poke = poke.lower().replace(" ", "-")
+
+        skins = self.generate_shop(ctx)
+        if skin not in skins:
+            await ctx.send(
+                f"You don't have the `{skin}` skin in your shop right now! View your shop with `/skin shop`."
+            )
+            return
+
+        # A skin should be purchasable for a poke if it or a PRIOR EVOLUTION exists in the shop.
+        # This is to avoid disincentivize evolving pokemon in order to put a skin on them later.
+        search_poke = await ctx.bot.db[1].pfile.find_one({"identifier": poke})
+        if search_poke is None:
+            await ctx.send("That pokemon does not exist!")
+            return
+        while search_poke["identifier"] not in skins[skin]:
+            if search_poke["evolves_from_species_id"] == "":
+                await ctx.send(
+                    f"You don't have a `{skin}` skin for `{poke}` in your shop right now! View your shop with `/skin shop`."
+                )
+                return
+            search_poke = await ctx.bot.db[1].pfile.find_one(
+                {"id": search_poke["evolves_from_species_id"]}
+            )
+        search_poke = search_poke["identifier"]
+
+        async with ctx.bot.db[0].acquire() as pconn:
+            shards = await pconn.fetchval(
+                "SELECT skin_tokens FROM users WHERE u_id = $1", ctx.author.id
+            )
+        if shards is None:
+            await ctx.send("You have not started!\nStart with `/start` first.")
+            return
+        price = self.skin_price(search_poke)
+        if shards < price:
+            await ctx.send(
+                "You do not have enough skin shards to buy that skin!\n"
+                f"It costs `{price}` skin shards. You currently have `{shards}` skin shards."
+            )
+            return
+
+        confirm = (
+            f"Are you sure you want to buy a `{skin}` skin for `{poke}`?\n"
+            f"It will cost `{price}` skin shards. You currently have `{shards}` skin shards."
+        )
+        if not await ConfirmView(ctx, confirm).wait():
+            await ctx.send("Purchase cancelled.")
+            return
+
+        async with ctx.bot.db[0].acquire() as pconn:
+            data = await pconn.fetchrow(
+                "SELECT skin_tokens, skins::json FROM users WHERE u_id = $1",
+                ctx.author.id,
+            )
+            shards = data["skin_tokens"]
+            skins = data["skins"]
+            if shards < price:
+                await ctx.send(
+                    "You do not have enough skin shards to buy that skin!\n"
+                    f"It costs `{price}` skin shards. You currently have `{shards}` skin shards."
+                )
+                return
+            if poke not in skins:
+                skins[poke] = {}
+            skins[poke][skin] = skins[poke].get(skin, 0) + 1
+            await pconn.execute(
+                "UPDATE users SET skin_tokens = skin_tokens - $2, skins = $3::json WHERE u_id = $1",
+                ctx.author.id,
+                price,
+                skins,
+            )
+
+        await ctx.send(f"Successfully purchased a `{skin}` skin for `{poke}`!")
+
+
+
+## todo:
+## 
+
+
+
+
+
     @halloween_cmds.command()
     async def buy(self, ctx, option: int):
         if not self.HALLOWEEN_COMMANDS:
@@ -519,6 +1073,7 @@ class Events(commands.Cog):
                 )
                 await ctx.send("Successfully bought 1 bone for 50 candy.")
                 return
+            event_rad = random.choice(self.HALLOWEEN_RADIANT)
             if option in {7, 8, 9}:
                 if bal["pumpkin"] < 1:
                     await ctx.send("You don't have enough pumpkins for that!")
@@ -529,15 +1084,15 @@ class Events(commands.Cog):
                 )
                 if option == 7:
                     await ctx.bot.commondb.create_poke(
-                        ctx.bot, ctx.author.id, "Missingno"
+                        ctx.bot, ctx.author.id, "Missingno", boosted=True
                     )
                     await ctx.send("Successfully bought a Missingno for 1 pumpkin.")
                 elif option == 8:
                     await ctx.bot.commondb.create_poke(
-                        ctx.bot, ctx.author.id, self.HALLOWEEN_RADIANT, radiant=True
+                        ctx.bot, ctx.author.id, event_rad, radiant=True
                     )
                     await ctx.send(
-                        f"Successfully bought a {self.HALLOWEEN_RADIANT} for 1 pumpkin!"
+                        f"Successfully bought a {event_rad} for 1 pumpkin!"
                     )
                 return
             price = [10, 8, 30, 100, 200][option - 2]
@@ -625,11 +1180,11 @@ class Events(commands.Cog):
             color=ORANGE,
         )
         if data["candy"]:
-            embed.add_field(name="Candy", value=f"{data['candy']}x")
+            embed.add_field(name="<:candy:1030156555351490600>", value=f"{data['candy']}x")
         if data["bone"]:
-            embed.add_field(name="Bones", value=f"{data['bone']}x")
+            embed.add_field(name="<:bones:1030149386543583273>", value=f"{data['bone']}x")
         if data["pumpkin"]:
-            embed.add_field(name="Pumpkins", value=f"{data['pumpkin']}x")
+            embed.add_field(name="<:pumpkin:1030226625482199100>", value=f"{data['pumpkin']}x")
         if inventory.get("spooky chest", 0):
             embed.add_field(
                 name="Spooky Chests", value=f"{inventory.get('spooky chest', 0)}x"
@@ -666,7 +1221,7 @@ class Events(commands.Cog):
             "**5** | 100 bones | Horrific Chest\n"
             "**6** | 200 bones | 1 pumpkin\n"
             "**7** | 1 pumpkin | Missingno\n"
-            "**8** | 1 pumpkin | Halloween radiant\n"
+            "**8** | 1 pumpkin | Trick or Treat radiant\n"
             "**9** | 1 pumpkin | 1 Halloween raffle entry\n"
         )
         embed = discord.Embed(
@@ -1888,554 +2443,6 @@ class ChristmasMove(discord.ui.Button):
 
 
 
-
-
-# Map of skin name -> list[pokemon name]
-# Every skin pack must have at least 5 skins in it, or the code must be modified
-    BUYABLE_SKINS = {
-        "event/dittohalloween1": [
-            "bulbasaur",
-            "ivysaur",
-            "venusaur",
-            "magikarp",
-            "gyarados",
-            "eevee",
-            "vaporeon",
-            "jolteon",
-            "flareon",
-            "espeon",
-            "umbreon",
-            "leafeon",
-            "glaceon",
-            "sylveon",
-            "wooper",
-            "quagsire",
-            "entei",
-            "lugia",
-            "chingling",
-            "chimecho",
-            "bidoof",
-            "bibarel",
-            "zorua",
-            "zoroark",
-            "joltik",
-            "galvantula",
-            "litwick",
-            "lampent",
-            "chandelure",
-            "bouffalant",
-            "genesect",
-            "rockruff",
-            "lycanroc",
-            "lycanroc-midnight",
-            "lycanroc-dusk",
-            "nihilego",
-            "marshadow",
-            "snom",
-            "frosmoth",
-        ],
-        "event/dittohalloween2": [
-            "bulbasaur",
-            "ivysaur",
-            "venusaur",
-            "magikarp",
-            "gyarados",
-            "eevee",
-            "vaporeon",
-            "jolteon",
-            "flareon",
-            "espeon",
-            "umbreon",
-            "leafeon",
-            "glaceon",
-            "sylveon",
-            "wooper",
-            "quagsire",
-            "entei",
-            "lugia",
-            "chingling",
-            "chimecho",
-            "bidoof",
-            "bibarel",
-            "zorua",
-            "zoroark",
-            "joltik",
-            "galvantula",
-            "litwick",
-            "lampent",
-            "chandelure",
-            "bouffalant",
-            "genesect",
-            "rockruff",
-            "lycanroc",
-            "lycanroc-midnight",
-            "lycanroc-dusk",
-            "nihilego",
-            "marshadow",
-            "snom",
-            "frosmoth",
-        ],
-        "event/dittomons1": [
-            "bulbasaur",
-            "ivysaur",
-            "venusaur",
-            "magikarp",
-            "gyarados",
-            "eevee",
-            "vaporeon",
-            "jolteon",
-            "flareon",
-            "espeon",
-            "umbreon",
-            "leafeon",
-            "glaceon",
-            "sylveon",
-            "wooper",
-            "quagsire",
-            "entei",
-            "lugia",
-            "chingling",
-            "chimecho",
-            "bidoof",
-            "bibarel",
-            "zorua",
-            "zoroark",
-            "joltik",
-            "galvantula",
-            "bouffalant",
-            "genesect",
-            "rockruff",
-            "lycanroc",
-            "lycanroc-midnight",
-            "lycanroc-dusk",
-            "nihilego",
-            "marshadow",
-            "snom",
-            "frosmoth",
-        ],
-        "event/dittomons2": [
-            "bulbasaur",
-            "ivysaur",
-            "venusaur",
-            "magikarp",
-            "gyarados",
-            "eevee",
-            "vaporeon",
-            "jolteon",
-            "flareon",
-            "espeon",
-            "umbreon",
-            "leafeon",
-            "glaceon",
-            "sylveon",
-            "wooper",
-            "quagsire",
-            "entei",
-            "lugia",
-            "chingling",
-            "chimecho",
-            "bidoof",
-            "bibarel",
-            "zorua",
-            "zoroark",
-            "joltik",
-            "galvantula",
-            "bouffalant",
-            "genesect",
-            "rockruff",
-            "nihilego",
-            "marshadow",
-            "snom",
-            "frosmoth",
-            ],
-        }
-    # Map of skin name -> int release timestamp (time.time() // (60 * 60 * 24 * 7))
-    # Skins will be excluded from the shop if their release timestamp is greater than the current release timestamp
-    # When adding a new skin, the value set MUST be greater than the current value, otherwise current shops will shuffle
-    RELEASE_PERIOD = {
-        "event/dittohalloween1": 2754,
-        "event/dittohalloween2": 2754,
-        "event/dittomons1": 2754,
-        "event/dittomons2": 2754,
-    }
-
-## replacement collections
-
-    def generate_shop(self, ctx):
-        """Generates the skins available for a current user."""
-        state = random.getstate()
-        try:
-            current_time = int(time.time() // (60 * 60 * 24 * 7))
-            random.seed(ctx.author.id + current_time)
-            skins = [
-                skin
-                for skin, release in RELEASE_PERIOD.items()
-                if release <= current_time
-            ]
-
-            skins = random.sample(skins, k=3)
-            result = {skin: random.sample(BUYABLE_SKINS[skin], k=5) for skin in skins}
-        except Exception:
-            raise
-        else:
-            return result
-        finally:
-            random.setstate(state)
-
-    def skin_price(self, pokemon: str):
-        """Returns the price of a particular pokemon in the skin shop."""
-        pokemon = pokemon.capitalize()
-        legend = set(LegendList + ubList)
-        if pokemon in legend:
-            return 160
-        rare = set(starterList + pseudoList)
-        if pokemon in rare:
-            return 80
-        common = set(pList) - legend - rare
-        return 40 if pokemon in common else 404
-
-    @halloween_cmds.command(name="shop")
-    async def event_skin_shop(self, ctx) -> None:
-        """View the skins available to you for purchase this week."""
-        async with ctx.bot.db[0].acquire() as pconn:
-            shards = await pconn.fetchval(
-                "SELECT skin_tokens FROM users WHERE u_id = $1", ctx.author.id
-            )
-        if shards is None:
-            await ctx.send("You have not started!\nStart with `/start` first.")
-            return
-        embed = discord.Embed(
-            title="Skin Shop",
-            color=random.choice(ctx.bot.colors),
-            description=f"You have **{shards}** skin shards.\nSkins are available for the listed pokemon and their evolved forms.\nBuy a skin with `/skin buy`.\nApplying a shop skin to a pokemon will make it untradable.",
-        )
-        skins = self.generate_shop(ctx)
-        for skin, pokes in skins.items():
-            desc = "".join(
-                f"`{poke.capitalize()}` - {self.skin_price(poke)}\n" for poke in pokes
-            )
-
-            embed.add_field(name=f'"{skin.capitalize()}" Skin', value=desc, inline=True)
-        embed.set_footer(text="Options rotate every Wednesday at 8pm ET.")
-        await ctx.send(embed=embed)
-
-    @halloween_cmds.command(name="buy")
-    @tradelock
-    async def skin_buy(self, ctx, poke: str, skin: str) -> None:
-        """Buy a skin from your shop."""
-        skin = skin.lower()
-        poke = poke.lower().replace(" ", "-")
-
-        skins = self.generate_shop(ctx)
-        if skin not in skins:
-            await ctx.send(
-                f"You don't have the `{skin}` skin in your shop right now! View your shop with `/skin shop`."
-            )
-            return
-
-        # A skin should be purchasable for a poke if it or a PRIOR EVOLUTION exists in the shop.
-        # This is to avoid disincentivize evolving pokemon in order to put a skin on them later.
-        search_poke = await ctx.bot.db[1].pfile.find_one({"identifier": poke})
-        if search_poke is None:
-            await ctx.send("That pokemon does not exist!")
-            return
-        while search_poke["identifier"] not in skins[skin]:
-            if search_poke["evolves_from_species_id"] == "":
-                await ctx.send(
-                    f"You don't have a `{skin}` skin for `{poke}` in your shop right now! View your shop with `/skin shop`."
-                )
-                return
-            search_poke = await ctx.bot.db[1].pfile.find_one(
-                {"id": search_poke["evolves_from_species_id"]}
-            )
-        search_poke = search_poke["identifier"]
-
-        async with ctx.bot.db[0].acquire() as pconn:
-            shards = await pconn.fetchval(
-                "SELECT skin_tokens FROM users WHERE u_id = $1", ctx.author.id
-            )
-        if shards is None:
-            await ctx.send("You have not started!\nStart with `/start` first.")
-            return
-        price = self.skin_price(search_poke)
-        if shards < price:
-            await ctx.send(
-                "You do not have enough skin shards to buy that skin!\n"
-                f"It costs `{price}` skin shards. You currently have `{shards}` skin shards."
-            )
-            return
-
-        confirm = (
-            f"Are you sure you want to buy a `{skin}` skin for `{poke}`?\n"
-            f"It will cost `{price}` skin shards. You currently have `{shards}` skin shards."
-        )
-        if not await ConfirmView(ctx, confirm).wait():
-            await ctx.send("Purchase cancelled.")
-            return
-
-        async with ctx.bot.db[0].acquire() as pconn:
-            data = await pconn.fetchrow(
-                "SELECT skin_tokens, skins::json FROM users WHERE u_id = $1",
-                ctx.author.id,
-            )
-            shards = data["skin_tokens"]
-            skins = data["skins"]
-            if shards < price:
-                await ctx.send(
-                    "You do not have enough skin shards to buy that skin!\n"
-                    f"It costs `{price}` skin shards. You currently have `{shards}` skin shards."
-                )
-                return
-            if poke not in skins:
-                skins[poke] = {}
-            skins[poke][skin] = skins[poke].get(skin, 0) + 1
-            await pconn.execute(
-                "UPDATE users SET skin_tokens = skin_tokens - $2, skins = $3::json WHERE u_id = $1",
-                ctx.author.id,
-                price,
-                skins,
-            )
-
-        await ctx.send(f"Successfully purchased a `{skin}` skin for `{poke}`!")
-
-## modified raid code
-
-class RaidSpawn(discord.ui.View):
-    """A spawn embed for a raid spawn."""
-
-    def __init__(self, bot, channel, poke: str, skin: str = None):
-        super().__init__(timeout=120)
-        self.bot = bot
-        self.channel = channel
-        self.poke = poke
-        self.skin = skin
-        self.registered = []
-        self.attacked = {}
-        self.state = "registering"
-        self.message = None
-
-    async def interaction_check(self, interaction):
-        if self.state == "registering":
-            if interaction.user in self.registered:
-                await interaction.response.send_message(
-                    content="You have already joined!", ephemeral=True
-                )
-                return False
-            return True
-        elif self.state == "attacking":
-            if interaction.user in self.attacked:
-                await interaction.response.send_message(
-                    content="You have already attacked!", ephemeral=True
-                )
-                return False
-            if interaction.user not in self.registered:
-                await interaction.response.send_message(
-                    content="You didn't join the battle! You can't attack this one.",
-                    ephemeral=True,
-                )
-                return False
-            return True
-        else:
-            await interaction.response.send_message(
-                content="This battle has already ended!", ephemeral=True
-            )
-            return False
-
-    async def start(self):
-        pokeurl = "https://skylarr1227.github.io/skins/" + await get_battle_file_name(
-            self.poke, self.bot, skin=self.skin
-        )
-        guild = await self.bot.mongo_find("guilds", {"id": self.channel.guild.id})
-        if guild is None:
-            small_images = False
-        else:
-            small_images = guild["small_images"]
-        color = random.choice(self.bot.colors)
-        embed = discord.Embed(
-            title="A Ditto Pokémon has spawned, join the fight to take it down!",
-            color=color,
-        )
-        embed.add_field(name="-", value="Click the button to join!")
-        if small_images:
-            embed.set_thumbnail(url=pokeurl)
-        else:
-            embed.set_image(url=pokeurl)
-        self.add_item(RaidJoin())
-        self.message = await self.channel.send(embed=embed, view=self)
-        await asyncio.sleep(30)
-        self.clear_items()
-
-        if not self.registered:
-            embed = discord.Embed(
-                title="The Ditto Pokémon ran away!",
-                color=color,
-            )
-            if small_images:
-                embed.set_thumbnail(url=pokeurl)
-            else:
-                embed.set_image(url=pokeurl)
-            await self.message.edit(embed=embed, view=None)
-            return
-
-        # Calculate valid moves of each effectiveness tier
-        form_info = await self.bot.db[1].forms.find_one(
-            {"identifier": self.poke.lower()}
-        )
-        type_ids = (
-            await self.bot.db[1].ptypes.find_one({"id": form_info["pokemon_id"]})
-        )["types"]
-        type_effectiveness = {}
-        for te in await self.bot.db[1].type_effectiveness.find({}).to_list(None):
-            type_effectiveness[(te["damage_type_id"], te["target_type_id"])] = te[
-                "damage_factor"
-            ]
-        super_types = []
-        normal_types = []
-        un_types = []
-        for attacker_type in range(1, 19):
-            effectiveness = 1
-            for defender_type in type_ids:
-                effectiveness *= (
-                    type_effectiveness[(attacker_type, defender_type)] / 100
-                )
-            if effectiveness > 1:
-                super_types.append(attacker_type)
-            elif effectiveness < 1:
-                un_types.append(attacker_type)
-            else:
-                normal_types.append(attacker_type)
-        super_raw = (
-            await self.bot.db[1]
-            .moves.find(
-                {"type_id": {"$in": super_types}, "damage_class_id": {"$ne": 1}}
-            )
-            .to_list(None)
-        )
-        super_moves = [
-            x["identifier"].capitalize().replace("-", " ") for x in super_raw
-        ]
-        normal_raw = (
-            await self.bot.db[1]
-            .moves.find(
-                {"type_id": {"$in": normal_types}, "damage_class_id": {"$ne": 1}}
-            )
-            .to_list(None)
-        )
-        normal_moves = [
-            x["identifier"].capitalize().replace("-", " ") for x in normal_raw
-        ]
-        un_raw = (
-            await self.bot.db[1]
-            .moves.find({"type_id": {"$in": un_types}, "damage_class_id": {"$ne": 1}})
-            .to_list(None)
-        )
-        un_moves = [x["identifier"].capitalize().replace("-", " ") for x in un_raw]
-
-        # Add the moves to the view
-        moves = []
-        moves.append(RaidMove(random.choice(super_moves), 2))
-        moves.append(RaidMove(random.choice(normal_moves), 1))
-        for move in random.sample(un_moves, k=2):
-            moves.append(RaidMove(move, 0))
-        random.shuffle(moves)
-        for move in moves:
-            self.add_item(move)
-
-        self.max_hp = int(len(self.registered) * 1.33)
-        embed = discord.Embed(
-            title="A Ditto Pokémon has spawned, attack it with everything you've got!",
-            color=color,
-        )
-        embed.add_field(name="-", value=f"HP = {self.max_hp}/{self.max_hp}")
-        if small_images:
-            embed.set_thumbnail(url=pokeurl)
-        else:
-            embed.set_image(url=pokeurl)
-        self.state = "attacking"
-        await self.message.edit(embed=embed, view=self)
-
-        for i in range(5):
-            await asyncio.sleep(3)
-            hp = max(self.max_hp - sum(self.attacked.values()), 0)
-            embed.clear_fields()
-            embed.add_field(name="-", value=f"HP = {hp}/{self.max_hp}")
-            await self.message.edit(embed=embed)
-
-        self.state = "ended"
-        hp = max(self.max_hp - sum(self.attacked.values()), 0)
-        if hp > 0:
-            embed = discord.Embed(
-                title="The Ditto Pokémon got away!",
-                color=color,
-            )
-            hp = max(self.max_hp - sum(self.attacked.values()), 0)
-            embed.add_field(name="-", value=f"HP = {hp}/{self.max_hp}")
-            if small_images:
-                embed.set_thumbnail(url=pokeurl)
-            else:
-                embed.set_image(url=pokeurl)
-            await self.message.edit(embed=embed, view=None)
-            return
-
-        async with self.bot.db[0].acquire() as pconn:
-            for attacker, damage in self.attacked.items():
-                await pconn.execute(
-                    "UPDATE users SET skin_tokens = skin_tokens + $1 WHERE u_id = $2",
-                    damage * 2,
-                    attacker.id,
-                )
-        embed = discord.Embed(
-            title="The Ditto Pokémon was defeated! Attackers have been awarded skin tokens.",
-            color=color,
-        )
-        if small_images:
-            embed.set_thumbnail(url=pokeurl)
-        else:
-            embed.set_image(url=pokeurl)
-        await self.message.edit(embed=embed, view=None)
-
-
-class RaidJoin(discord.ui.Button):
-    """A button to join a ditto pokemon raid."""
-
-    def __init__(self):
-        super().__init__(label="Join", style=discord.ButtonStyle.green)
-
-    async def callback(self, interaction):
-        self.view.registered.append(interaction.user)
-        await interaction.response.send_message(
-            content="You have joined the battle!", ephemeral=True
-        )
-
-
-class RaidMove(discord.ui.Button):
-    """A move button for attacking a ditto pokemon raid."""
-
-    def __init__(self, move, damage):
-        super().__init__(
-            label=move,
-            style=discord.ButtonStyle.gray,
-        )
-        self.move = move
-        self.damage = damage
-        if damage == 2:
-            self.effective = (
-                "It's super effective! You will get 2x rewards if the poke is defeated."
-            )
-        elif damage == 1:
-            self.effective = "It hits! You will get 1x rewards if the poke is defeated."
-        else:
-            self.effective = "It shrugged off your attack..."
-
-    async def callback(self, interaction):
-        self.view.attacked[interaction.user] = self.damage
-        await interaction.response.send_message(
-            content=f"You attack the ditto pokemon with {self.move}... {self.effective}",
-            ephemeral=True,
-        )
-
-## todo:
-## 
 
 
 

@@ -4,7 +4,7 @@ from discord.ext import commands
 
 from dittocogs.json_files import *
 from utils.checks import tradelock
-from utils.misc import ConfirmView
+from utils.misc import ConfirmView, pagify
 import asyncio
 from datetime import datetime
 
@@ -311,7 +311,10 @@ class TradeMainView(discord.ui.View):
 
                 name, attrs = await self._attrs(pconn, poke)
 
-                msg.append(f"{name['pokname']} ({poke.poke_id})({id}) {attrs}")
+                msg.append(f"{name['pokname']} (GlobalID:{poke.poke_id})")
+                if attrs:
+                    attr = ""
+                    msg.append(f"{attrs}")
 
             if not p1_has:
                 msg.append("No pokemon added to trade")
@@ -329,7 +332,9 @@ class TradeMainView(discord.ui.View):
 
                 name, attrs = await self._attrs(pconn, poke)
 
-                msg.append(f"{name['pokname']} ({poke.poke_id})({id}) {attrs}")
+                msg.append(f"{name['pokname']} (GlobalID:{poke.poke_id})")
+                if attrs:
+                    msg.append(f"{attrs}")
 
             if not p2_has:
                 msg.append("No pokemon added to trade")
