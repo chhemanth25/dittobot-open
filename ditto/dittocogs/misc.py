@@ -113,20 +113,60 @@ class StaffApp(discord.ui.Modal, title='NominationForm'):
                     title=f"{interaction.user.id}-{interaction.user.name}", description=f"`Username:`\n{self.username.value}\n\n`UserID:`\n{self.userid.value}\n\n`Reasoning:`\n{self.reasoning.value}\n\n`Second Choice`:\n{self.second_choice.value}", color=0xFF0060)
             await interaction.client.get_partial_messageable(1004310910313181325).send(embed=embed)
             #return self.submitter
-            
+            pretty_nominated = ''
+            for x in self.nominated:
+                pretty_nominated += ' ' + x
+            embed2 = discord.Embed(
+                title="All Submissions (ongoing)", description=f"{self.nominated}\n\n{pretty_nominated}", color=0x05C3DD)
+            await interaction.client.get_partial_messageable(1004310910313181325).send(embed=embed2)
 
+
+class NominateView(discord.ui.View):
+    def __init__(self, ctx):
+        self.ctx = ctx
+
+    async def interaction_check(self, interaction):
+        if interaction.user.id != self.ctx.author.id:
+            await interaction.response.send_message(
+            content="You are not allowed to interact with this button.",
+            ephemeral=True,
+        )
+            return False
+        return True
+
+    @discord.ui.button(emoji=":emoji_29:", style=discord.ButtonStyle.green, row=1, label="Continue")
+    async def continue_button(self, interaction, button):
+            """Community Staff nomination rules"""
+            desc = ''
+            desc += '\n\n> In the past, our staff team has generally added new members to the team via the community putting in applicatons,'
+            desc += '\nand then narrowing down the applicants after a set time peroid has gone by via an internal series of voting amongst staff'
+            desc += '\nuntil we were down to just a few remaining applications that the majority of staff thought would be a good a fit.'
+            desc += '\n\n**This time around we will be doing things more with the community in mind, in order to provide the best experience for everyone that we can!**'
+
+            desc += '\n||Click the button below on this message and the User Nomination form will pop up-input the information requested and submit.||'
+            embed = discord.Embed(title="DittoBOTS 1st Community Staff Nomination", color=0xFF0060, description=desc)
+
+            staff_app_button = discord.ui.Button(emoji="<:minka_dittohug:1004785919066378330>", style=discord.ButtonStyle.blurple, row=1, label="Click here to Open Form")
+            self.v.add_item(staff_app_button)           
+            staff_app_button.callback = staff_app_callback
+            async def staff_app_callback(interaction):
+                await interaction.response.send_modal(StaffApp())
+            await interaction.response.edit_message(embed=embed, view=self.v)
+
+    @discord.ui.button(emoji=":minus:", style=discord.ButtonStyle.red, row=1, label="Cancel")
+    async def cancel_button(self, interaction, button):
+      desc = 'You have chosen to cancel.'
+      embed = discord.Embed(title="Cancelled", color=0xFF0060, description=desc)
+      await interaction.response.edit_message(embed=embed, view=None)
 
 
 
 class Misc(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # This might be better in Redis, but eh if someone wants to get .01% better rates by spam switching channels, let them
         self.user_cache = defaultdict(int)
         submitter = []
 
-
-    accepted_roles = [1006436978021126224,1006436699624198224,1006436577473466440,1006436459147952160,1006436366135087164,1006436226305359932,1006435988035346462,1006435776562724914,1006432180613943378,1006435567325675583,1006431947800707153,1004609198048411659,1004609075889311804,1004342763803914261]
 
     @check_mod()
     @commands.hybrid_command()
@@ -148,58 +188,14 @@ class Misc(commands.Cog):
             desc += '\n> 4. **Only submit one nomination form, submitting multiple will just potentially make all of them from your userID get ignored**'
             embed = discord.Embed(title="Rules for Nominating", color=0xFF0060, description=desc)
 
-            # setup both view and view2
-            async def check(interaction):
-                if interaction.user.id != ctx.author.id:
-                    await interaction.response.send_message(
-                        content="You are not allowed to interact with this button.",
-                    ephemeral=True,
-                    )
-                    return False
-                return True
-            view = discord.ui.View(timeout=160)
-            view.interaction_check = check
-            self.v = view
-            view2 = discord.ui.View(timeout=160)
-            view2.interaction_check = check
-            self.v2 = view2
+            await ctx.send(embed=embed, view=NominateView(ctx))
 
-            # button setup (3 buttons, continue_button/cancel_button/staff_app_button)
-            continue_button = discord.ui.Button(emoji="<a:emoji_29:834080999024885821>", style=discord.ButtonStyle.green, row=1, label="Continue")
-            cancel_button = discord.ui.Button(emoji="<a:minus:1008763512652304555>", style=discord.ButtonStyle.red, row=1, label="Cancel")
-            async def continue_button(interaction):
-                await self.staff_app_page(interaction)
-            async def cancel_button(interaction):
-                desc = 'You have chosen to cancel.'
-                embed = discord.Embed(title="Cancelled", color=0xFF0060, description=desc)
-                await interaction.response.edit_message(embed=embed, view=None)                 
-            view2.add_item(continue_button)
-            continue_button.callback = continue_button 
-            view2.add_item(cancel_button)
-            cancel_button.callback = cancel_button
-            self.msg = await ctx.send(embed=embed, view=view2)
             # setup buttons/view for next page of the process
             
         else:
             await ctx.send("yeah-you do not have the right rank roles in the server to complete this action, sorry.")
         
-    async def staff_app_page(self, interaction):
-        """Community Staff nomination rules"""
-        desc = ''
-        desc += '\n\n> In the past, our staff team has generally added new members to the team via the community putting in applicatons,'
-        desc += '\nand then narrowing down the applicants after a set time peroid has gone by via an internal series of voting amongst staff'
-        desc += '\nuntil we were down to just a few remaining applications that the majority of staff thought would be a good a fit.'
-        desc += '\n\n**This time around we will be doing things more with the community in mind, in order to provide the best experience for everyone that we can!**'
 
-        desc += '\n||Click the button below on this message and the User Nomination form will pop up-input the information requested and submit.||'
-        embed = discord.Embed(title="DittoBOTS 1st Community Staff Nomination", color=0xFF0060, description=desc)
-        
-        staff_app_button = discord.ui.Button(emoji="<:minka_dittohug:1004785919066378330>", style=discord.ButtonStyle.blurple, row=1, label="Click here to Open Form")
-        self.v.add_item(staff_app_button)           
-        staff_app_button.callback = staff_app_callback
-        async def staff_app_callback(interaction):
-            await interaction.response.send_modal(StaffApp())
-        await interaction.response.edit_message(embed=embed, view=self.v)
 
     async def on_timeout(self, interaction):
         with contextlib.suppress(discord.NotFound):
