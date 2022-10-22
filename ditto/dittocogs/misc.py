@@ -113,12 +113,7 @@ class StaffApp(discord.ui.Modal, title='NominationForm'):
                     title=f"{interaction.user.id}-{interaction.user.name}", description=f"`Username:`\n{self.username.value}\n\n`UserID:`\n{self.userid.value}\n\n`Reasoning:`\n{self.reasoning.value}\n\n`Second Choice`:\n{self.second_choice.value}", color=0xFF0060)
             await interaction.client.get_partial_messageable(1004310910313181325).send(embed=embed)
             #return self.submitter
-            pretty_nominated = ''
-            for x in self.nominated:
-                pretty_nominated += ' ' + x
-            embed2 = discord.Embed(
-                title="All Submissions (ongoing)", description=f"{self.nominated}\n\n{pretty_nominated}", color=0x05C3DD)
-            await interaction.client.get_partial_messageable(1004310910313181325).send(embed=embed2)
+
 
 
 class NominateView(discord.ui.View):
