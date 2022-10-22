@@ -90,7 +90,7 @@ class StaffApp(discord.ui.Modal, title='NominationForm'):
             required=True,
             max_length=3000,
         )
-
+        
         
         async def on_submit(self, interaction: discord.Interaction):
 
@@ -104,22 +104,27 @@ class StaffApp(discord.ui.Modal, title='NominationForm'):
             self.nominated.append(self.username.value)
             embed = discord.Embed(
                     title=f"{interaction.user.id}-{interaction.user.name}", description=f"`Username:`\n{self.username.value}\n\n`UserID:`\n{self.userid.value}\n\n`Reasoning:`\n{self.reasoning.value}\n\n`Second Choice`:\n{self.second_choice.value}", color=0xFF0060)
-            await interaction.client.get_partial_messageable(1004310910313181325).send(embed=embed)
-            await submit_confirmed(self, interaction)
+            await interaction.client.get_partial_messageable(1032471909817929768).send(embed=embed)
+            async def submit_confirmed(self, interaction):
+                await submit_to_misc(interaction)
+                await submit_confirmed(interaction)
 
 
 class AppView(discord.ui.View):
     def __init__(self, ctx):
+        super().__init__(timeout=160)
         self.ctx = ctx
+        self.submitted = []
+    
 
-    async def interaction_check(self, interaction):
-        if interaction.user.id != self.ctx.author.id:
-            await interaction.response.send_message(
-            content="You are not allowed to interact with this button.",
-            ephemeral=True,
-        )
-            return False
-        return True
+    #async def interaction_check(self, interaction):
+    #    if interaction.user.id != self.ctx.author.id:
+    #        await interaction.response.send_message(
+    #        content="You are not allowed to interact with this button.",
+    #        ephemeral=True,
+    #    )
+    #        return False
+    #    return True
 
     @discord.ui.button(emoji="<:minka_dittohug:1004785919066378330>", style=discord.ButtonStyle.blurple, row=1, label="Click here to Open Form")
     async def staff_app_button(self, interaction, button):
@@ -127,8 +132,9 @@ class AppView(discord.ui.View):
 
 class NominateView(discord.ui.View):
     def __init__(self, ctx):
+        super().__init__(timeout=160)
         self.ctx = ctx
-       
+      # ctx = interaction
 
     async def interaction_check(self, interaction):
         if interaction.user.id != self.ctx.author.id:
@@ -139,25 +145,25 @@ class NominateView(discord.ui.View):
             return False
         return True
 
-    @discord.ui.button(emoji=":emoji_29:", style=discord.ButtonStyle.green, row=1, label="Continue")
+    @discord.ui.button(emoji="<a:emoji_29:834080999024885821>", style=discord.ButtonStyle.green, row=1, label="Continue")
     async def continue_button(self, interaction, button):
             """Community Staff nomination rules"""
             desc = ''
             desc += '\n\n> In the past, our staff team has generally added new members to the team via the community putting in applicatons,'
-            desc += '\nand then narrowing down the applicants after a set time peroid has gone by via an internal series of voting amongst staff'
-            desc += '\nuntil we were down to just a few remaining applications that the majority of staff thought would be a good a fit.'
+            desc += '\n> and then narrowing down the applicants after a set time peroid has gone by via an internal series of voting amongst staff'
+            desc += '\n > until we were down to just a few remaining applications that the majority of staff thought would be a good a fit.'
             desc += '\n\n**This time around we will be doing things more with the community in mind, in order to provide the best experience for everyone that we can!**'
 
             desc += '\n||Click the button below on this message and the User Nomination form will pop up-input the information requested and submit.||'
             embed = discord.Embed(title="DittoBOTS 1st Community Staff Nomination", color=0xFF0060, description=desc)
-            await ctx.send(embed=embed, view=AppView(ctx))
+            await interaction.response.edit_message(embed=embed, view=AppView(interaction))
    
 
-            async def staff_app_callback(interaction):
-                await interaction.response.send_modal(())
-            await interaction.response.edit_message(embed=embed, view=self.v)
+            #async def staff_app_callback(interaction):
+            #    await interaction.response.send_modal(())
+            #await interaction.response.edit_message(embed=embed, view=self.v)
 
-    @discord.ui.button(emoji=":minus:", style=discord.ButtonStyle.red, row=1, label="Cancel")
+    @discord.ui.button(emoji="<a:minus:1008763512652304555>", style=discord.ButtonStyle.red, row=1, label="Cancel")
     async def cancel_button(self, interaction, button):
       desc = 'You have chosen to cancel.'
       embed = discord.Embed(title="Cancelled", color=0xFF0060, description=desc)
@@ -171,9 +177,9 @@ class Misc(commands.Cog):
         self.user_cache = defaultdict(int)
         self.submitted = []
 
-    async def submit_confirmed(self, interaction):
-         self.submitted.append(interaction.user.id)
-         self.nominated.append(nomination)
+    async def submit_to_misc(self, interaction):
+        self.submitted.append(interaction.user.id)
+        self.nominated.append(nomination)
 
     @check_mod()
     @commands.hybrid_command()
@@ -188,7 +194,7 @@ class Misc(commands.Cog):
             # role check and first page of of the nomination process
             desc = '**__Please cornfirm via the buttons  below__**:'
             desc += '\n<:bar1:871849386689318992><:bar5:871849386500558858><:bar5:871849386500558858><:bar5:871849386500558858><:bar5:871849386500558858><:bar5:871849386500558858><:bar5:871849386500558858><:bar5:871849386500558858><:bar6:871849386257301555>\n'
-            desc += '\n\n\n__**Some things to consider before nominating anyone**__'
+            desc += '\n__**Some things to consider before nominating anyone**__'
             desc += '\n> 1. **Any form of bug or alt account abuse to gain any advantage** *will result in all involved parties being banned until a much later date.*'
             desc += '\n> 2. **__Staff team will still have the final say,__ and still must approve of the communiys picks regardless, but this is simply to ensure someone totally unfit is not chosen as a prank/meme.**'           
             desc += '\n> 3. **Bribing, blackmailing, or otherwise presuading or manipulating other users can and will result in a permanent ban.**'
