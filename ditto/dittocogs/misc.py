@@ -52,62 +52,47 @@ class Feedback(discord.ui.Modal, title='Feedback'):
 
 
 class StaffApp(discord.ui.Modal, title='NominationForm'):
-        # Our modal classes MUST subclass `discord.ui.Modal`,
-        # but the title can be whatever you want.
 
-        # This will be a short input, where the user can enter their name
-        # It will also have a placeholder, as denoted by the `placeholder` kwarg.
-        # By default, it is required and is a short-style input which is exactly
-        # what we want.
-        nominated = []
-
-        track = defaultdict(int)
-
-        username = discord.ui.TextInput(
-            label='Discord Tag',
-            placeholder='ex. User#1231',
-            max_length=100,
-            required=True
-        )
-
-        userid = discord.ui.TextInput(
-            label='User ID (if possible)',
-            placeholder='ex. 790722073248661525',
-            max_length=20,
-            required=False
-        )
-
-        second_choice = discord.ui.TextInput(
-            label='2nd Choice (userID or username#0000)',
-            placeholder='ex. User#1231/790722073248661525 ',
-            max_length=20,
-            required=False
-                )
-        reasoning = discord.ui.TextInput(
-            label='Brief Reasoning',
-            style=discord.TextStyle.long,
-            placeholder='Briefly explain your nomination',
-            required=True,
-            max_length=3000,
-        )
+    username = discord.ui.TextInput(
+        label='Discord Tag/Name with #0000 at the end',
+        placeholder='ex. User#1231',
+        max_length=100,
+        required=True
+    )
+    second_choice = discord.ui.TextInput(
+        label='2nd Choice (Discord Tag/Name)',
+        placeholder='ex. User#1231',
+        max_length=20,
+        required=False
+    )
+    reasoning = discord.ui.TextInput(
+        label='Brief Reasoning',
+        style=discord.TextStyle.long,
+        placeholder='Briefly explain your nomination',
+        required=True,
+        max_length=3000,
+    )
         
-        
-        async def on_submit(self, interaction: discord.Interaction):
+    async def interaction_check(self, interaction):
+        async with interaction.client.db[0].acquire() as pconn:
+            submission_check = await pconn.fetchval("SELECT submitter from staff_apps where u_id = $1", interaction.user.id)
+            if submission_check:
+                return await interaction.response.send_message('You have filled this form already-quit trying to cheat the system')
 
-            await interaction.response.send_message(f'Submitted-Thank you for your help selecting the best new staff possible!', ephemeral=True)
 
-            if self.userid.value is None:
-                self.userid.value = ''
-            if self.second_choice.value is None:
-                self.second_choice.value = ''
-            #self.submiter.append(interaction.user.id)
-            self.nominated.append(self.username.value)
-            embed = discord.Embed(
-                    title=f"{interaction.user.id}-{interaction.user.name}", description=f"`Username:`\n{self.username.value}\n\n`UserID:`\n{self.userid.value}\n\n`Reasoning:`\n{self.reasoning.value}\n\n`Second Choice`:\n{self.second_choice.value}", color=0xFF0060)
-            await interaction.client.get_partial_messageable(1032471909817929768).send(embed=embed)
-            async def submit_confirmed(self, interaction):
-                await submit_to_misc(interaction)
-                await submit_confirmed(interaction)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.send_message(f'Submitted-Thank you for your help selecting the best new staff possible!', ephemeral=True)
+        if self.second_choice.value is None:
+            self.second_choice.value = ''
+        embed = discord.Embed(
+                title=f"{interaction.user.id}-{interaction.user.name}", description=f"`Username:`\n{self.username.value}\n\n`Reasoning:`\n{self.reasoning.value}\n\n`Second Choice`:\n{self.second_choice.value}", color=0xFF0060)
+        await interaction.client.get_partial_messageable(1032471909817929768).send(embed=embed)
+        async with interaction.client.db[0].acquire() as pconn:
+            try:
+                await pconn.execute('INSERT INTO staff_apps (nominated, second_choice, u_id) VALUES ($1, $2, $3)', self.username.value, self.second_choice.value, interaction.user.id)
+            except Exception as e:
+                self.bot.logger.exception("Error in ON_SUBMIT WTF", exc_info=e)
 
 
 class AppView(discord.ui.View):
@@ -117,24 +102,25 @@ class AppView(discord.ui.View):
         self.submitted = []
     
 
-    #async def interaction_check(self, interaction):
-    #    if interaction.user.id != self.ctx.author.id:
-    #        await interaction.response.send_message(
-    #        content="You are not allowed to interact with this button.",
-    #        ephemeral=True,
-    #    )
-    #        return False
-    #    return True
+    async def interaction_check(self, interaction):
+        if interaction.user.id != self.ctx.author.id:
+            await interaction.response.send_message(
+            content="You are not allowed to interact with this button.",
+            ephemeral=True,
+        )
+            return False
+        return True
 
     @discord.ui.button(emoji="<:minka_dittohug:1004785919066378330>", style=discord.ButtonStyle.blurple, row=1, label="Click here to Open Form")
     async def staff_app_button(self, interaction, button):
         await interaction.response.send_modal(StaffApp())
+        await interaction.message.edit(view=None)
 
 class NominateView(discord.ui.View):
     def __init__(self, ctx):
         super().__init__(timeout=160)
         self.ctx = ctx
-      # ctx = interaction
+
 
     async def interaction_check(self, interaction):
         if interaction.user.id != self.ctx.author.id:
@@ -156,7 +142,7 @@ class NominateView(discord.ui.View):
 
             desc += '\n||Click the button below on this message and the User Nomination form will pop up-input the information requested and submit.||'
             embed = discord.Embed(title="DittoBOTS 1st Community Staff Nomination", color=0xFF0060, description=desc)
-            await interaction.response.edit_message(embed=embed, view=AppView(interaction))
+            await interaction.response.edit_message(embed=embed, view=AppView(self.ctx))
    
 
             #async def staff_app_callback(interaction):
@@ -176,10 +162,8 @@ class Misc(commands.Cog):
         self.bot = bot
         self.user_cache = defaultdict(int)
         self.submitted = []
+        self.nominations = []
 
-    async def submit_to_misc(self, interaction):
-        self.submitted.append(interaction.user.id)
-        self.nominated.append(nomination)
 
     @check_mod()
     @commands.hybrid_command()
@@ -187,8 +171,10 @@ class Misc(commands.Cog):
         if ctx.guild.id != 999953429751414784:
             await ctx.send(f"You can only use this command in the {self.bot.user.name} Official Server.")
             return
-        if ctx.author.id in self.submitted: # check if they have submited to this modal before
-            return await interaction.response.send_message('You have filled this form already-', ephemeral=True)
+        async with ctx.bot.db[0].acquire() as pconn:
+            submission_check = await pconn.fetch("SELECT * from staff_apps where u_id = $1", ctx.author.id)
+            if submission_check:
+                return await ctx.send('You have filled this form already-')
         accepted_roles = [1006436978021126224,1006436699624198224,1006436577473466440,1006436459147952160,1006436366135087164,1006436226305359932,1006435988035346462,1006435776562724914,1006432180613943378,1006435567325675583,1006431947800707153,1004609198048411659,1004609075889311804,1004342763803914261]
         if set(accepted_roles) & set([x.id for x in ctx.author.roles]):
             # role check and first page of of the nomination process
