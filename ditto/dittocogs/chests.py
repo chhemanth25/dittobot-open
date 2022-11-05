@@ -3,8 +3,151 @@ import random
 import discord
 from discord.ext import commands
 from utils.misc import ConfirmView, ListSelectView
-
+from discord import app_commands
 from dittocogs.pokemon_list import LegendList, pList, pseudoList, starterList, ubList
+from enum import Enum
+import asyncio
+
+Choice = app_commands.Choice
+radiant_menu = [
+    discord.SelectOption(label="Shiny Multiplier x1",emoji="<:1:1013539737014907030>",description="5 Radiant Gems", value=1),
+    discord.SelectOption(label="Battle Multiplier x1",emoji="<:2:1013539739263041618>",description="5 Radiant Gems", value=2),
+    discord.SelectOption(label="IV Multiplier x1",emoji="<:3:1013539741502812310>",description="5 Radiant Gems", value=3),
+    discord.SelectOption(label="Breeding Multiplier x1",emoji="<:4:1013539744027783208>",description="5 Radiant Gems", value=4),
+    discord.SelectOption(label="Legend Chest",emoji="<:5:1013539745692909740>",description="75 Radiant Gems", value=5),
+    discord.SelectOption(label="Radiant Pokemon (non-legend)",emoji="<:6:1013539747517444208>",description="100 Radiant Gems", value=6),
+    discord.SelectOption(label="Radiant Pokemon (rare)",emoji="<:7:1013539749035786291>",description="200 Radiant Gems", value=7),
+    discord.SelectOption(label="Radiant Pokemon (legend)",emoji="<:8:1013539750596071524>",description="300 Radiant Gems", value=8)
+]
+
+
+
+
+
+
+class RadiantView(discord.ui.View):
+    def __init__(self, ctx):
+        super().__init__(timeout=60)
+        self.ctx = ctx
+        self.choice = None
+        self.event = asyncio.Event()
+        self.CURRENTLY_ACTIVE = (
+            "Cramorant",
+            "Frillish",
+            "Solosis",
+            "Spearow",
+            "Arceus",
+            "Zorua-hisui",
+        )
+        # currently available event radiants, {"Pokemon": "String when they get that poke!\n"}
+        self.EVENT_ACTIVE = {}
+        # packs that can be bought with ;radiant, (("Pack Desc", <int - Price in radiant gems>))
+        self.PACKS = (
+            ("Shiny Multiplier x1", 5),
+            ("Battle Multiplier x1", 5),
+            ("IV Multiplier x1", 5),
+            ("Breeding Multiplier x1", 5),
+            ("Legend Chest", 75),
+            ("Radiant Pokemon (non-legend)", 100),
+            ("Radiant Pokemon (rare)", 200),
+            ("Radiant Pokemon (legend)", 300),
+        )
+        self.CREDITS_PER_MULTI = 100000
+        legend = set(LegendList + ubList)
+        rare = set(starterList + pseudoList)
+        common = set(pList) - legend - rare
+        self.LEGEND = set(self.CURRENTLY_ACTIVE) & legend
+        self.RARE = set(self.CURRENTLY_ACTIVE) & rare
+        self.COMMON = set(self.CURRENTLY_ACTIVE) & common
+
+
+    async def interaction_check(self, interaction):
+        if interaction.user.id != self.ctx.author.id:
+            await interaction.response.send_message(
+            content="You are not allowed to interact with this button.",
+            ephemeral=True,
+        )
+            return False
+        return True
+
+    async def on_timeout(self, interaction):
+        with contextlib.suppress(discord.NotFound):
+            await interaction.response.edit_message(embed=embed, view=None)
+
+    @discord.ui.select(options=radiant_menu)
+    async def radiant_selection(self, interaction, select):
+        self.choice = interaction.data["values"][0]
+        self.event.set()
+        self.choice = int(self.choice)
+        pack = self.PACKS[self.choice - 1]
+
+        if not await ConfirmView(
+            self.ctx,
+            f"Are you sure you want to buy {pack[0]} for <a:radiantgem:1013790990852685955>x{pack[1]}?",
+        ).wait():
+            await self.ctx.send("Purchase cancelled.")
+            return
+
+        choice = ""
+        if self.choice in {6, 7, 8}:
+            if self.choice == 6:
+                options = list(self.COMMON)
+            elif self.choice == 7:
+                options = list(self.RARE)
+            elif self.choice == 8:
+                options = list(self.LEGEND)
+            if not options:
+                await self.ctx.send(
+                    "There are currently no valid pokemon in the pool. Please try again later."
+                )
+                return
+            choice = await ListSelectView(
+                self.ctx, "Which pokemon do you want?", options
+            ).wait()
+            if choice is None:
+                await self.ctx.send("You did not select in time, cancelling.")
+                return
+        async with self.ctx.bot.db[0].acquire() as pconn:
+            inventory = await pconn.fetchval(
+                "SELECT inventory::json FROM users WHERE u_id = $1", self.ctx.author.id
+            )
+            if inventory is None:
+                await self.ctx.send(f"You have not Started!\nStart with `/start` first!")
+                return
+            if inventory.get("radiant gem", 0) < pack[1]:
+                await self.ctx.send("You cannot afford that pack!")
+                return
+            # await self.log_chest(ctx)
+            inventory["radiant gem"] = inventory.get("radiant gem", 0) - pack[1]
+            if self.choice in {1, 2, 3, 4}:
+                if self.choice == 1:
+                    item = "shiny-multiplier"
+                elif self.choice == 2:
+                    item = "battle-multiplier"
+                elif self.choice == 3:
+                    item = "iv-multiplier"
+                elif self.choice == 4:
+                    item = "breeding-multiplier"
+                if inventory.get(item, 0) >= 50:
+                    await self.ctx.send("You have hit the cap for that multiplier!")
+                    return
+                inventory[item] = min(inventory.get(item, 0) + 1, 50)
+            elif self.choice == 5:
+                inventory["legend chest"] = inventory.get("legend chest", 0) + 1
+            elif self.choice in {6, 7, 8}:
+                await self.ctx.bot.commondb.create_poke(
+                    self.ctx.bot, self.ctx.author.id, choice, radiant=True, boosted=True
+                )
+            await pconn.execute(
+                "UPDATE users SET inventory = $1::json where u_id = $2",
+                inventory,
+                self.__annotations__ctx.author.id,
+            )
+        await self.ctx.send(
+            f"You have successfully bought {pack[0]} for <a:radiantgem:1013790990852685955>x{pack[1]}."
+        )
+
+
 
 
 class Chests(commands.Cog):
@@ -14,9 +157,12 @@ class Chests(commands.Cog):
         self.bot = bot
         # currently available radiant pokemon, ("Pokemon")
         self.CURRENTLY_ACTIVE = (
-            "Popplio",
-            "Mudbray",
-            "Glastrier",
+            "Cramorant",
+            "Frillish",
+            "Solosis",
+            "Spearow",
+            "Arceus",
+            "Zorua-hisui",
         )
         # currently available event radiants, {"Pokemon": "String when they get that poke!\n"}
         self.EVENT_ACTIVE = {}
@@ -110,7 +256,7 @@ class Chests(commands.Cog):
             await ctx.bot.commondb.create_poke(
                 ctx.bot, ctx.author.id, pokemon, radiant=True
             )
-            msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a radiant {pokemon}!**\n"
+            msg = f"<a:slowpokeclap:1004716068599758848> **Congratulations! You received a radiant {pokemon}!**\n"
         elif reward == "chest":
             async with ctx.bot.db[0].acquire() as pconn:
                 inventory = await pconn.fetchval(
@@ -201,7 +347,7 @@ class Chests(commands.Cog):
             await ctx.bot.commondb.create_poke(
                 ctx.bot, ctx.author.id, pokemon, radiant=True
             )
-            msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a radiant {pokemon}!**\n"
+            msg = f"<a:slowpokeclap:1004716068599758848> **Congratulations! You received a radiant {pokemon}!**\n"
         elif reward == "redeem":
             amount = random.randint(4, 6)
             async with ctx.bot.db[0].acquire() as pconn:
@@ -307,7 +453,7 @@ class Chests(commands.Cog):
             await ctx.bot.commondb.create_poke(
                 ctx.bot, ctx.author.id, pokemon, radiant=True
             )
-            msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a radiant {pokemon}!**\n"
+            msg = f"<a:slowpokeclap:1004716068599758848> **Congratulations! You received a radiant {pokemon}!**\n"
         elif reward == "shiny":
             pokemon = random.choice(pList)
             await ctx.bot.commondb.create_poke(
@@ -421,7 +567,7 @@ class Chests(commands.Cog):
             await ctx.bot.get_partial_messageable(1005740622805729370).send(
                 f"<:b:1005742997876510800><:RAD:1005743326235988069>:\n **User**-`{ctx.author.id}`\nobtained a boosted **radiant** - `{pokemon}`!"
             )
-            msg = f"<a:ExcitedChika:717510691703095386> **Congratulations! You received a boosted radiant {pokemon}!**\n"
+            msg = f"<a:slowpokeclap:1004716068599758848> **Congratulations! You received a boosted radiant {pokemon}!**\n"
         elif reward == "boostedshinypseudo":
             pokemon = random.choice(pseudoList)
             await ctx.bot.commondb.create_poke(
@@ -464,92 +610,121 @@ class Chests(commands.Cog):
         msg += await self._maybe_spawn_event(ctx, 0.33)
         await ctx.send(msg)
 
+    #@commands.hybrid_command()
+    #async def radiant(self, ctx, packnum: int = None):
+    #    """Spend your radiant gems."""
+    #    if packnum is None:
+    #        desc = ""
+    #        for idx, pack in enumerate(self.PACKS, start=1):
+    #            desc += f"**{idx}.** __{pack[0]}__ - <a:radiantgem:1013790990852685955>x{pack[1]}\n"
+    #        desc += f"\nUse `/radiant` with the number you want to buy."
+    #        e = discord.Embed(
+    #            title="Radiant Gem Shop",
+    #            description=desc,
+    #            color=ctx.bot.get_random_color(),
+    #        )
+    #        await ctx.send(embed=e)
+    #        return
+    #    if packnum < 1 or packnum > len(self.PACKS):
+    #        await ctx.send("That is not a valid pack number.")
+    #        return
+    #    pack = self.PACKS[packnum - 1]
+#
+    #    if not await ConfirmView(
+    #        ctx,
+    #        f"Are you sure you want to buy {pack[0]} for <a:radiantgem:1013790990852685955>x{pack[1]}?",
+    #    ).wait():
+    #        await ctx.send("Purchase cancelled.")
+    #        return
+#
+    #    choice = ""
+    #    if packnum in {6, 7, 8}:
+    #        if packnum == 6:
+    #            options = list(self.COMMON)
+    #        elif packnum == 7:
+    #            options = list(self.RARE)
+    #        elif packnum == 8:
+    #            options = list(self.LEGEND)
+    #        if not options:
+    #            await ctx.send(
+    #                "There are currently no valid pokemon in the pool. Please try again later."
+    #            )
+    #            return
+    #        choice = await ListSelectView(
+    #            ctx, "Which pokemon do you want?", options
+    #        ).wait()
+    #        if choice is None:
+    #            await ctx.send("You did not select in time, cancelling.")
+    #            return
+    #    async with ctx.bot.db[0].acquire() as pconn:
+    #        inventory = await pconn.fetchval(
+    #            "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
+    #        )
+    #        if inventory is None:
+    #            await ctx.send(f"You have not Started!\nStart with `/start` first!")
+    #            return
+    #        if inventory.get("radiant gem", 0) < pack[1]:
+    #            await ctx.send("You cannot afford that pack!")
+    #            return
+    #        # await self.log_chest(ctx)
+    #        inventory["radiant gem"] = inventory.get("radiant gem", 0) - pack[1]
+    #        if packnum in {1, 2, 3, 4}:
+    #            if packnum == 1:
+    #                item = "shiny-multiplier"
+    #            elif packnum == 2:
+    #                item = "battle-multiplier"
+    #            elif packnum == 3:
+    #                item = "iv-multiplier"
+    #            elif packnum == 4:
+    #                item = "breeding-multiplier"
+    #            if inventory.get(item, 0) >= 50:
+    #                await ctx.send("You have hit the cap for that multiplier!")
+    #                return
+    #            inventory[item] = min(inventory.get(item, 0) + 1, 50)
+    #        elif packnum == 5:
+    #            inventory["legend chest"] = inventory.get("legend chest", 0) + 1
+    #        elif packnum in {6, 7, 8}:
+    #            await ctx.bot.commondb.create_poke(
+    #                ctx.bot, ctx.author.id, choice, radiant=True, boosted=True
+    #            )
+    #        await pconn.execute(
+    #            "UPDATE users SET inventory = $1::json where u_id = $2",
+    #            inventory,
+    #            ctx.author.id,
+    #        )
+    #    await ctx.send(
+    #        f"You have successfully bought {pack[0]} for <a:radiantgem:1013790990852685955>x{pack[1]}."
+    #    )
+
+
+    class RadiantChoice(Enum):
+        one = 1
+        two = 2
+        three = 3
+        four = 4
+        five = 5
+        six = 6
+        seven = 7
+        eight = 8
+
+
+
     @commands.hybrid_command()
-    async def radiant(self, ctx, packnum: int = None):
+    async def radiant(self, ctx):
         """Spend your radiant gems."""
-        if packnum is None:
-            desc = ""
-            for idx, pack in enumerate(self.PACKS, start=1):
-                desc += f"**{idx}.** __{pack[0]}__ - <a:radiantgem:1013790990852685955>x{pack[1]}\n"
-            desc += f"\nUse `/radiant` with the number you want to buy."
-            e = discord.Embed(
-                title="Radiant Gem Shop",
-                description=desc,
-                color=ctx.bot.get_random_color(),
-            )
-            await ctx.send(embed=e)
-            return
-        if packnum < 1 or packnum > len(self.PACKS):
-            await ctx.send("That is not a valid pack number.")
-            return
-        pack = self.PACKS[packnum - 1]
-
-        if not await ConfirmView(
-            ctx,
-            f"Are you sure you want to buy {pack[0]} for <a:radiantgem:1013790990852685955>x{pack[1]}?",
-        ).wait():
-            await ctx.send("Purchase cancelled.")
-            return
-
-        choice = ""
-        if packnum in {6, 7, 8}:
-            if packnum == 6:
-                options = list(self.COMMON)
-            elif packnum == 7:
-                options = list(self.RARE)
-            elif packnum == 8:
-                options = list(self.LEGEND)
-            if not options:
-                await ctx.send(
-                    "There are currently no valid pokemon in the pool. Please try again later."
-                )
-                return
-            choice = await ListSelectView(
-                ctx, "Which pokemon do you want?", options
-            ).wait()
-            if choice is None:
-                await ctx.send("You did not select in time, cancelling.")
-                return
-        async with ctx.bot.db[0].acquire() as pconn:
-            inventory = await pconn.fetchval(
-                "SELECT inventory::json FROM users WHERE u_id = $1", ctx.author.id
-            )
-            if inventory is None:
-                await ctx.send(f"You have not Started!\nStart with `/start` first!")
-                return
-            if inventory.get("radiant gem", 0) < pack[1]:
-                await ctx.send("You cannot afford that pack!")
-                return
-            # await self.log_chest(ctx)
-            inventory["radiant gem"] = inventory.get("radiant gem", 0) - pack[1]
-            if packnum in {1, 2, 3, 4}:
-                if packnum == 1:
-                    item = "shiny-multiplier"
-                elif packnum == 2:
-                    item = "battle-multiplier"
-                elif packnum == 3:
-                    item = "iv-multiplier"
-                elif packnum == 4:
-                    item = "breeding-multiplier"
-                if inventory.get(item, 0) >= 50:
-                    await ctx.send("You have hit the cap for that multiplier!")
-                    return
-                inventory[item] = min(inventory.get(item, 0) + 1, 50)
-            elif packnum == 5:
-                inventory["legend chest"] = inventory.get("legend chest", 0) + 1
-            elif packnum in {6, 7, 8}:
-                await ctx.bot.commondb.create_poke(
-                    ctx.bot, ctx.author.id, choice, radiant=True, boosted=True
-                )
-            await pconn.execute(
-                "UPDATE users SET inventory = $1::json where u_id = $2",
-                inventory,
-                ctx.author.id,
-            )
-        await ctx.send(
-            f"You have successfully bought {pack[0]} for <a:radiantgem:1013790990852685955>x{pack[1]}."
+        desc = ""
+        desc += f"\nSelect which item to buy from the radiant shop!"
+        e = discord.Embed(
+            title="Radiant Gem Shop",
+            description=desc,
+            color=ctx.bot.get_random_color(),
         )
+        await ctx.send(embed=e, view=RadiantView(ctx))
 
+
+
+
+    
 
 async def setup(bot):
     await bot.add_cog(Chests(bot))
