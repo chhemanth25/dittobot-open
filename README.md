@@ -17,6 +17,31 @@ other:
 Minor contributing developers: 
 - *Motzumoto#9773, Rootspring*
 
+
+#### Full list of Contributors big or small to the data collection:
+Discord Usernames:
+#### Major
+Cruithne,
+skylarr,
+ConCon,
+vKoIIextionz—,
+Bloomlake,
+Dylee,
+KYPspikes,
+
+#### minor
+De Ultimate Gamer,
+❄🐺Snowy Wolfie🐺❄,
+RadioactiveRenegade,
+ฯFa£©¤nฯ
+Blotch
+Chichiri12345
+ampplaca
+xxmoonlotusxx
+vKoIIextionz—
+Silver5mith
+Starregi 
+
 Please refer to COPYRIGHT.md for information regarding the source code.
 
 ### For copyright reasons, original Closed-source repo: https://github.com/skylarr1227/dittoz
