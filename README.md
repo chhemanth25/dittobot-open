@@ -9,7 +9,7 @@ https://discord.gg/ditto
 - skylarr#6666, Cruithne#1421, Zak~#0193
 
 ### - Other Major Contributing Developers: 
-- __**Flame#2941, Neuro Assassin#4779**__
+- __**Flame#2941, Neuro Assassin#4779, Dylee**__
 
 
 
