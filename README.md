@@ -6,7 +6,7 @@ https://discord.gg/ditto
 - skylarr#6666, Cruithne#1421, UwUchihaKrypt#8715, Eaaarl#3381, Chichiri12345#6662
 
 ### - Current Contributing Developers:
-- skylarr#6666, Cruithne#1421, Zak~#0193
+- skylarr#6666, Cruithne#1421, Command_String#6538, SylveonDeko#0001
 
 ### - Other Major Contributing Developers: 
 - __**Flame#2941, Neuro Assassin#4779, Dylee**__
